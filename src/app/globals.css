@@ -1,13 +1,20 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --background: #020617;
-  --foreground: #f1f5f9;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --neon-blue: #3b82f6;
   --neon-cyan: #06b6d4;
   --neon-purple: #a855f7;
   --neon-pink: #ec4899;
   --neon-green: #10b981;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {
@@ -22,6 +29,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================
@@ -101,14 +109,27 @@ body {
    ============================================ */
 
 .glass-card {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 1rem;
 }
 
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(148, 163, 184, 0.1);
+}
+
 .glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 0 15px rgba(59, 130, 246, 0.08);
+}
+
+.dark .glass-card-hover:hover {
   background: rgba(15, 23, 42, 0.8);
   border-color: rgba(148, 163, 184, 0.2);
   box-shadow:

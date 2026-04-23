@@ -1,14 +1,17 @@
 "use client";
 
-import { BookOpen, Download, Bookmark, ChevronDown, FileText, ExternalLink } from "lucide-react";
+import { BookOpen, Download, Bookmark, FileText, ExternalLink, X, Battery, Zap, ZapOff, ShieldAlert, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const chapters = [
   {
     id: "ch1",
     title: "Chapter 1: Basic Electrical Units & Ohm's Law",
-    color: "blue",
+    color: "cyan",
+    level: "dasar",
+    reviews: "6661",
+    icon: Battery,
     materials: [
       {
         id: 1,
@@ -29,7 +32,10 @@ const chapters = [
   {
     id: "ch2",
     title: "Chapter 2: Series & Parallel Circuits",
-    color: "cyan",
+    color: "blue",
+    level: "intermediate",
+    reviews: "5307",
+    icon: Zap,
     materials: [
       {
         id: 3,
@@ -58,6 +64,9 @@ const chapters = [
     id: "ch3",
     title: "Chapter 3: Electrical Power & Energy",
     color: "purple",
+    level: "mastery",
+    reviews: "4969",
+    icon: ZapOff,
     materials: [
       {
         id: 6,
@@ -78,7 +87,10 @@ const chapters = [
   {
     id: "ch4",
     title: "Chapter 4: Circuit Safety & Protection",
-    color: "red",
+    color: "pink",
+    level: "intermediate",
+    reviews: "4685",
+    icon: ShieldAlert,
     materials: [
       {
         id: 8,
@@ -99,160 +111,262 @@ const chapters = [
   {
     id: "ch5",
     title: "Chapter 5: Electronic Components",
-    color: "amber",
+    color: "green",
+    level: "dasar",
+    reviews: "2189",
+    icon: Cpu,
     materials: [
       {
         id: 10,
-        title: "Passive Components: Resistors, Capacitors, Inductors",
+        title: "Passive Components",
         objective: "Identify passive component types, symbols, and their roles in circuits.",
         content: "Passive components do not amplify signals. Resistors oppose current flow and are measured in Ohms. They use a color code system: each band represents a digit or multiplier (e.g., Brown-Black-Red-Gold = 1,0,×100, ±5% = 1kΩ ±5%). Capacitors store electrical energy in an electric field, measured in Farads (F). Common types include ceramic, electrolytic, and film capacitors. Inductors store energy in a magnetic field when current flows through a coil, measured in Henrys (H). They oppose changes in current and are used in filters, transformers, and energy storage.",
-        source: "Boylestad & Nashelsky, 'Electronic Devices and Circuit Theory', 11th Edition, Pearson",
+        source: "Boylestad & Nashelsky, 'Electronic Devices and Circuit Theory', 11th Edition",
       },
       {
         id: 11,
-        title: "Active Components: Diodes & Transistors",
+        title: "Active Components",
         objective: "Explain the operating principles of semiconductor diodes and transistors.",
-        content: "Active components can amplify or switch electronic signals. A diode is a two-terminal semiconductor device that allows current to flow primarily in one direction (forward bias). The PN junction has a forward voltage drop of approximately 0.7V for silicon diodes. In reverse bias, only a tiny leakage current flows until the breakdown voltage. Transistors (BJT) are three-terminal devices (Base, Collector, Emitter) that amplify current. A small base current controls a much larger collector current. The current gain (β or hFE) typically ranges from 50 to 300. Transistors operate in cutoff, active, and saturation regions.",
-        source: "Boylestad & Nashelsky, 'Electronic Devices and Circuit Theory', 11th Edition, Pearson",
+        content: "Active components can amplify or switch electronic signals. A diode is a two-terminal semiconductor device that allows current to flow primarily in one direction (forward bias). The PN junction has a forward voltage drop of approximately 0.7V for silicon diodes. In reverse bias, only a tiny leakage current flows until the breakdown voltage. Transistors (BJT) are three-terminal devices (Base, Collector, Emitter) that amplify current. A small base current controls a much larger collector current. The current gain (β or hFE) typically ranges from 50 to 300.",
+        source: "Boylestad & Nashelsky, 'Electronic Devices and Circuit Theory', 11th Edition",
       },
     ],
   },
 ];
 
-const colorMap: Record<string, { accent: string; bg: string; border: string; icon: string }> = {
-  blue: { accent: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: "text-blue-500" },
-  cyan: { accent: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", icon: "text-cyan-500" },
-  purple: { accent: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: "text-purple-500" },
-  red: { accent: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", icon: "text-red-500" },
-  amber: { accent: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: "text-amber-500" },
+const colorMap: Record<string, { bg: string; button: string; iconColor: string }> = {
+  cyan: { bg: "bg-cyan-100 dark:bg-cyan-900/30 border-b border-cyan-200 dark:border-cyan-800", button: "bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-500/20", iconColor: "text-cyan-600 dark:text-cyan-400" },
+  blue: { bg: "bg-blue-100 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-800", button: "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20", iconColor: "text-blue-600 dark:text-blue-400" },
+  purple: { bg: "bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-800", button: "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20", iconColor: "text-purple-600 dark:text-purple-400" },
+  pink: { bg: "bg-pink-100 dark:bg-pink-900/30 border-b border-pink-200 dark:border-pink-800", button: "bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-500/20", iconColor: "text-pink-600 dark:text-pink-400" },
+  green: { bg: "bg-emerald-100 dark:bg-emerald-900/30 border-b border-emerald-200 dark:border-emerald-800", button: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400" },
 };
 
-export default function MaterialsPage() {
-  const [openMaterial, setOpenMaterial] = useState<number | null>(null);
+const springTransition = { type: "spring" as const, stiffness: 350, damping: 30 };
 
-  const toggle = (id: number) => setOpenMaterial(openMaterial === id ? null : id);
+export default function MaterialsPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Prevent body scrolling when modal is open
+  useEffect(() => {
+    if (selectedId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [selectedId]);
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] p-6 md:p-16 max-w-5xl mx-auto w-full space-y-12">
+    <div className="flex flex-col min-h-[calc(100vh-64px)] p-6 md:p-12 lg:p-16 w-full space-y-12 max-w-7xl mx-auto transition-colors duration-300">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="text-center md:text-left"
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Learning <span className="neon-text-green">Materials</span>
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 transition-colors duration-300">
+          Learning <span className="neon-text-blue">Materials</span>
         </h1>
-        <p className="text-slate-400 text-lg">
-          5 comprehensive chapters covering Basic Electricity fundamentals.
-          Expand each topic to read the full content.
+        <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl transition-colors duration-300">
+          Comprehensive curriculum covering Basic Electricity fundamentals.
+          Select a module to start learning.
         </p>
       </motion.div>
 
-      <div className="space-y-14">
-        {chapters.map((chapter, ci) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {chapters.map((chapter, index) => {
           const c = colorMap[chapter.color] || colorMap.blue;
+          const Icon = chapter.icon;
+          
           return (
-            <motion.section
+            <motion.div
+              layoutId={`card-${chapter.id}`}
               key={chapter.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: ci * 0.08, duration: 0.5 }}
-              className="space-y-5"
+              onClick={() => setSelectedId(chapter.id)}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ ...springTransition, delay: index * 0.05 }}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl dark:shadow-none dark:border dark:border-slate-800 dark:hover:border-slate-700 flex flex-col h-full group transition-all duration-300"
             >
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <Bookmark className={`w-6 h-6 ${c.icon}`} />
-                <h2 className="text-2xl md:text-3xl font-bold text-white">{chapter.title}</h2>
-              </div>
+              {/* Top Half */}
+              <motion.div 
+                layoutId={`image-${chapter.id}`} 
+                className={`relative h-48 sm:h-56 ${c.bg} flex items-center justify-center overflow-hidden transition-colors duration-500`}
+              >
+                {/* Badge */}
+                <div className="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 text-slate-700 dark:text-slate-200 shadow-sm z-10 transition-colors duration-300">
+                  <FileText className={`w-3.5 h-3.5 ${c.iconColor}`} />
+                  {chapter.materials.length} Materi
+                </div>
 
-              <div className="space-y-4">
-                {chapter.materials.map((mat, mi) => {
-                  const isOpen = openMaterial === mat.id;
-                  return (
-                    <motion.div
-                      key={mat.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: mi * 0.1, duration: 0.4 }}
-                      className="glass-card overflow-hidden border border-slate-700/40 hover:border-slate-600/60 transition-colors"
-                    >
-                      {/* Header — clickable accordion */}
-                      <button
-                        onClick={() => toggle(mat.id)}
-                        className="w-full text-left p-5 md:p-6 flex items-start justify-between gap-4 group"
-                      >
-                        <div className="flex-1">
-                          <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                            {mat.title}
-                          </h3>
-                          <div className={`mt-3 flex gap-3 ${c.bg} border ${c.border} ${c.accent} p-3 rounded-lg`}>
-                            <BookOpen className="w-4 h-4 shrink-0 mt-0.5" />
-                            <div>
-                              <span className="block font-bold text-xs uppercase tracking-wider mb-0.5">
-                                Learning Objective:
-                              </span>
-                              <p className="text-sm leading-relaxed opacity-90">{mat.objective}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <motion.div
-                          animate={{ rotate: isOpen ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="shrink-0 mt-1"
-                        >
-                          <ChevronDown className="w-5 h-5 text-slate-400" />
-                        </motion.div>
-                      </button>
+                {/* Best Seller badge for mastery */}
+                {chapter.level === 'mastery' && (
+                   <div className="absolute top-4 right-4 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-sm z-10 transition-colors duration-300">
+                     <span>✨</span> Best Seller
+                   </div>
+                )}
+                
+                {/* Left vertical text */}
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-slate-900/5 dark:text-white/5 font-black text-2xl tracking-[0.3em] uppercase whitespace-nowrap z-0 transition-colors duration-300">
+                  {chapter.level}
+                </div>
+                
+                {/* Right vertical text */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-slate-900/5 dark:text-white/5 font-black text-2xl tracking-[0.3em] uppercase whitespace-nowrap z-0 transition-colors duration-300">
+                  {chapter.level}
+                </div>
 
-                      {/* Expandable content */}
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.35, ease: "easeInOut" }}
-                            className="accordion-content"
-                          >
-                            <div className="px-5 md:px-6 pb-5 md:pb-6 border-t border-slate-800/60 pt-5 space-y-4">
-                              <p className="text-slate-300 leading-relaxed text-sm md:text-base">
-                                {mat.content}
-                              </p>
+                {/* Center Icon Cube equivalent */}
+                <motion.div 
+                  layoutId={`icon-container-${chapter.id}`} 
+                  className="w-24 h-24 bg-white/50 dark:bg-black/20 rounded-2xl flex items-center justify-center transform rotate-12 shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 z-10 backdrop-blur-sm border border-black/5 dark:border-white/10"
+                >
+                   <Icon className={`w-12 h-12 ${c.iconColor} -rotate-12 group-hover:-rotate-6 transition-transform duration-300`} />
+                </motion.div>
+              </motion.div>
 
-                              {/* Source citation */}
-                              <div className="flex items-start gap-2 bg-slate-800/50 p-3 rounded-lg border border-slate-700/40">
-                                <FileText className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                                <div>
-                                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
-                                    Source
-                                  </span>
-                                  <p className="text-xs text-slate-400">{mat.source}</p>
-                                </div>
-                              </div>
+              {/* Bottom Half */}
+              <motion.div layoutId={`content-container-${chapter.id}`} className="p-6 flex flex-col flex-grow bg-white dark:bg-slate-900 transition-colors duration-300">
+                <motion.h3 layoutId={`title-${chapter.id}`} className="font-extrabold text-slate-800 dark:text-slate-100 text-xl mb-4 line-clamp-2 transition-colors duration-300">
+                  {chapter.title}
+                </motion.h3>
+                
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="flex items-end gap-1 h-4">
+                    <div className={`w-1.5 rounded-sm ${chapter.level === 'dasar' ? 'bg-green-500 h-2' : chapter.level === 'intermediate' ? 'bg-green-500 h-3' : 'bg-green-500 h-4'}`}></div>
+                    <div className={`w-1.5 rounded-sm ${chapter.level === 'dasar' ? 'bg-slate-200 dark:bg-slate-800 h-3' : 'bg-green-500 h-3'}`}></div>
+                    <div className={`w-1.5 rounded-sm ${chapter.level === 'mastery' ? 'bg-green-500 h-4' : 'bg-slate-200 dark:bg-slate-800 h-4'}`}></div>
+                  </div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400 font-bold capitalize transition-colors duration-300">
+                    {chapter.level === 'dasar' ? 'Pemula' : chapter.level === 'intermediate' ? 'Menengah' : 'Mahir'}
+                  </span>
+                  <span className="text-sm text-slate-400 dark:text-slate-500 ml-1 transition-colors duration-300">({chapter.reviews} ulasan)</span>
+                </div>
 
-                              <div className="flex gap-3 pt-1">
-                                <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg transition-colors border border-slate-700 text-sm font-medium">
-                                  <Download className="w-4 h-4" />
-                                  Download PDF
-                                </button>
-                                <button className="flex items-center gap-2 text-slate-400 hover:text-blue-400 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
-                                  <ExternalLink className="w-4 h-4" />
-                                  View Reference
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.section>
+                <div className="mt-auto">
+                  <div className="flex justify-between items-end mb-4">
+                    <span className="text-slate-400 dark:text-slate-500 font-medium line-through text-sm transition-colors duration-300">Rp 150.000</span>
+                    <span className="text-red-600 dark:text-rose-500 font-black text-lg tracking-tight transition-colors duration-300">GRATIS</span>
+                  </div>
+                  
+                  <button className={`w-full ${c.button} font-bold py-3 rounded-xl transition-all active:scale-[0.98]`}>
+                    Pelajari
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
           );
         })}
       </div>
+
+      {/* EXPANDED VIEW MODAL */}
+      <AnimatePresence>
+        {selectedId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-md"
+              onClick={() => setSelectedId(null)}
+            />
+            
+            {chapters.filter(c => c.id === selectedId).map(chapter => {
+              const c = colorMap[chapter.color] || colorMap.blue;
+              const Icon = chapter.icon;
+
+              return (
+                <motion.div
+                  key="expanded-card"
+                  layoutId={`card-${chapter.id}`}
+                  transition={springTransition}
+                  className="bg-white dark:bg-slate-950 w-full max-w-4xl rounded-2xl overflow-hidden relative z-10 flex flex-col max-h-[90vh] shadow-2xl dark:border dark:border-slate-800"
+                >
+                  {/* Top Header */}
+                  <motion.div 
+                    layoutId={`image-${chapter.id}`} 
+                    className={`h-40 sm:h-48 md:h-56 ${c.bg} relative flex items-center justify-center shrink-0 transition-colors duration-300`}
+                  >
+                    <motion.div 
+                      layoutId={`icon-container-${chapter.id}`} 
+                      className="w-20 h-20 sm:w-24 sm:h-24 bg-white/50 dark:bg-black/20 rounded-2xl flex items-center justify-center transform rotate-12 shadow-inner border border-black/5 dark:border-white/10"
+                    >
+                       <Icon className={`w-10 h-10 sm:w-12 sm:h-12 ${c.iconColor} -rotate-12`} />
+                    </motion.div>
+                  </motion.div>
+
+                  <button 
+                     className="absolute top-4 right-4 bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/40 text-slate-800 dark:text-white rounded-full p-2 transition-colors z-20 backdrop-blur-sm"
+                     onClick={() => setSelectedId(null)}
+                  >
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+
+                  {/* Content Scrollable */}
+                  <motion.div 
+                    layoutId={`content-container-${chapter.id}`} 
+                    className="p-6 md:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950 flex-grow transition-colors duration-300"
+                  >
+                     <motion.h2 layoutId={`title-${chapter.id}`} className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-3 transition-colors duration-300">
+                       {chapter.title}
+                     </motion.h2>
+                     <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed text-sm sm:text-base max-w-3xl transition-colors duration-300">
+                       Explore the materials below to master this topic. This module covers essential theoretical concepts and practical applications required for a complete understanding of {chapter.title.split(':')[1] || chapter.title}.
+                     </p>
+
+                     <div className="space-y-4 sm:space-y-6">
+                       {chapter.materials.map((mat, idx) => (
+                         <motion.div 
+                           initial={{ opacity: 0, x: -20 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.1 + (idx * 0.05) }}
+                           key={mat.id} 
+                           className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-md transition-all group"
+                         >
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-2 transition-colors">
+                                  {mat.title}
+                                </h4>
+                                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 sm:p-4 border border-slate-100 dark:border-slate-700/50 mb-4 transition-colors duration-300">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <BookOpen className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                      Learning Objective
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed transition-colors duration-300">
+                                    {mat.objective}
+                                  </p>
+                                </div>
+                                <p className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed hidden sm:block transition-colors duration-300">
+                                  {mat.content.length > 150 ? `${mat.content.substring(0, 150)}...` : mat.content}
+                                </p>
+                              </div>
+                              <div className="shrink-0 flex flex-row md:flex-col gap-3 justify-end items-end md:items-center">
+                                <button className={`${c.button} px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm w-full md:w-auto text-center`}>
+                                  Buka Materi
+                                </button>
+                                <button className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors w-full md:w-auto flex justify-center items-center">
+                                  <Download className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                         </motion.div>
+                       ))}
+                     </div>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

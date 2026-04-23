@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Zap, BookOpen, PenTool, LayoutDashboard, Target, Menu, X } from "lucide-react";
+import { Zap, BookOpen, PenTool, LayoutDashboard, Target, Menu, X, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 const links = [
   { href: "/", label: "Home", icon: Zap },
@@ -18,9 +19,19 @@ const links = [
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-800/60 bg-slate-950/70 backdrop-blur-2xl">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800/60 bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl transition-colors duration-300">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -36,7 +47,7 @@ export function Navbar() {
           >
             <Zap className="h-6 w-6 text-blue-400" />
           </motion.div>
-          <span className="font-bold text-lg text-white tracking-tight">
+          <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight transition-colors">
             Basic <span className="neon-text-blue">Electricity</span>
           </span>
         </Link>
@@ -78,14 +89,26 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Mobile Hamburger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-slate-400 hover:text-white transition-colors p-2"
-          aria-label="Toggle mobile menu"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {/* Theme Toggle & Mobile Hamburger */}
+        <div className="flex items-center gap-2">
+          {mounted && (
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          )}
+          
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors p-2"
+            aria-label="Toggle mobile menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
