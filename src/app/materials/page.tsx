@@ -183,18 +183,16 @@ export default function MaterialsPage() {
           
           return (
             <motion.div
-              layoutId={`card-${chapter.id}`}
               key={chapter.id}
               onClick={() => setSelectedId(chapter.id)}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ ...springTransition, delay: index * 0.05 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30, delay: index * 0.05 }}
               whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
               className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl dark:shadow-none dark:border dark:border-slate-800 dark:hover:border-slate-700 flex flex-col h-full group transition-all duration-300"
             >
               {/* Top Half */}
-              <motion.div 
-                layoutId={`image-${chapter.id}`} 
+              <div 
                 className={`relative h-48 sm:h-56 ${c.bg} flex items-center justify-center overflow-hidden transition-colors duration-500`}
               >
                 {/* Badge */}
@@ -221,19 +219,18 @@ export default function MaterialsPage() {
                 </div>
 
                 {/* Center Icon Cube equivalent */}
-                <motion.div 
-                  layoutId={`icon-container-${chapter.id}`} 
+                <div 
                   className="w-24 h-24 bg-white/50 dark:bg-black/20 rounded-2xl flex items-center justify-center transform rotate-12 shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 z-10 backdrop-blur-sm border border-black/5 dark:border-white/10"
                 >
                    <Icon className={`w-12 h-12 ${c.iconColor} -rotate-12 group-hover:-rotate-6 transition-transform duration-300`} />
-                </motion.div>
-              </motion.div>
+                </div>
+              </div>
 
               {/* Bottom Half */}
-              <motion.div layoutId={`content-container-${chapter.id}`} className="p-6 flex flex-col flex-grow bg-white dark:bg-slate-900 transition-colors duration-300">
-                <motion.h3 layoutId={`title-${chapter.id}`} className="font-extrabold text-slate-800 dark:text-slate-100 text-xl mb-4 line-clamp-2 transition-colors duration-300">
+              <div className="p-6 flex flex-col flex-grow bg-white dark:bg-slate-900 transition-colors duration-300">
+                <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-xl mb-4 line-clamp-2 transition-colors duration-300">
                   {chapter.title}
-                </motion.h3>
+                </h3>
                 
                 <div className="flex items-center gap-2 mb-6">
                   <div className="flex items-end gap-1 h-4">
@@ -257,7 +254,7 @@ export default function MaterialsPage() {
                     Pelajari
                   </button>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           );
         })}
@@ -283,22 +280,22 @@ export default function MaterialsPage() {
               return (
                 <motion.div
                   key="expanded-card"
-                  layoutId={`card-${chapter.id}`}
-                  transition={springTransition}
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
                   className="bg-white dark:bg-slate-950 w-full max-w-4xl rounded-2xl overflow-hidden relative z-10 flex flex-col max-h-[90vh] shadow-2xl dark:border dark:border-slate-800"
                 >
                   {/* Top Header */}
-                  <motion.div 
-                    layoutId={`image-${chapter.id}`} 
+                  <div 
                     className={`h-40 sm:h-48 md:h-56 ${c.bg} relative flex items-center justify-center shrink-0 transition-colors duration-300`}
                   >
-                    <motion.div 
-                      layoutId={`icon-container-${chapter.id}`} 
+                    <div 
                       className="w-20 h-20 sm:w-24 sm:h-24 bg-white/50 dark:bg-black/20 rounded-2xl flex items-center justify-center transform rotate-12 shadow-inner border border-black/5 dark:border-white/10"
                     >
                        <Icon className={`w-10 h-10 sm:w-12 sm:h-12 ${c.iconColor} -rotate-12`} />
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
 
                   <button 
                      className="absolute top-4 right-4 bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/40 text-slate-800 dark:text-white rounded-full p-2 transition-colors z-20 backdrop-blur-sm"
@@ -308,13 +305,12 @@ export default function MaterialsPage() {
                   </button>
 
                   {/* Content Scrollable */}
-                  <motion.div 
-                    layoutId={`content-container-${chapter.id}`} 
+                  <div 
                     className="p-6 md:p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950 flex-grow transition-colors duration-300"
                   >
-                     <motion.h2 layoutId={`title-${chapter.id}`} className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-3 transition-colors duration-300">
+                     <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-3 transition-colors duration-300">
                        {chapter.title}
-                     </motion.h2>
+                     </h2>
                      <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed text-sm sm:text-base max-w-3xl transition-colors duration-300">
                        Explore the materials below to master this topic. This module covers essential theoretical concepts and practical applications required for a complete understanding of {chapter.title.split(':')[1] || chapter.title}.
                      </p>
@@ -360,7 +356,7 @@ export default function MaterialsPage() {
                          </motion.div>
                        ))}
                      </div>
-                  </motion.div>
+                  </div>
                 </motion.div>
               );
             })}
