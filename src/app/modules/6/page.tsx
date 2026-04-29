@@ -25,8 +25,8 @@ export default function CapacitorModule() {
                transition={{ duration: 2, repeat: Infinity }}
                className="relative mb-8"
             >
-               <div className="w-24 h-2 rounded-full bg-blue-500 shadow-[0_0_20px_#3b82f6] absolute top-0 -translate-x-1/2" />
-               <div className="w-24 h-2 rounded-full bg-red-500 shadow-[0_0_20px_#ef4444] absolute top-8 -translate-x-1/2" />
+               <div className="w-24 h-2 rounded-full bg-blue-500 shadow-[0_0_20px_#3b82f6] absolute top-0 left-1/2 -translate-x-1/2" />
+               <div className="w-24 h-2 rounded-full bg-red-500 shadow-[0_0_20px_#ef4444] absolute top-8 left-1/2 -translate-x-1/2" />
                <Disc3 className="w-16 h-16 text-slate-600 mt-12" />
             </motion.div>
 

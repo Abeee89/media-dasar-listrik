@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   ReactFlow, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge,
   Node, Edge, NodeChange, EdgeChange, Connection, Handle, Position,
@@ -139,9 +139,28 @@ function evaluateCircuit(nodes: Node[], edges: Edge[]): EvalResult {
 }
 
 /* ─── palette config item ─── */
-function PaletteItem({ label, icon, color, children, onDragStart }: {
-  label: string; icon: React.ReactNode; color: string;
-  children: React.ReactNode; onDragStart: (e: React.DragEvent) => void;
+function PaletteItem({
+  label,
+  icon,
+  color,
+  children,
+  onDragStart,
+  draggable = true,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  children: React.ReactNode;
+  onDragStart: (e: React.DragEvent) => void;
+  draggable?: boolean;
+  onPointerDown?: (e: React.PointerEvent) => void;
+  onPointerMove?: (e: React.PointerEvent) => void;
+  onPointerUp?: (e: React.PointerEvent) => void;
+  onPointerCancel?: (e: React.PointerEvent) => void;
 }) {
   const [open, setOpen] = useState(false);
   const border = { blue: 'border-blue-500/30', orange: 'border-orange-500/30', green: 'border-emerald-500/30' }[color] || 'border-slate-700';
@@ -150,8 +169,17 @@ function PaletteItem({ label, icon, color, children, onDragStart }: {
   return (
     <div className={`rounded-xl border ${border} overflow-hidden transition-all bg-slate-800/60`}>
       <div className="flex items-center gap-2">
-        <div draggable onDragStart={onDragStart}
-          className={`flex-1 flex items-center gap-3 p-3 cursor-grab active:cursor-grabbing ${hoverBg} transition-colors`}>
+        <div
+          draggable={draggable}
+          onDragStart={onDragStart}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerCancel}
+          className={`flex-1 flex items-center gap-3 p-3 cursor-grab active:cursor-grabbing ${hoverBg} transition-colors ${
+            draggable ? '' : 'touch-none'
+          }`}
+        >
           {icon}
           <span className="text-sm font-semibold text-white">{label}</span>
         </div>
@@ -170,6 +198,21 @@ function PaletteItem({ label, icon, color, children, onDragStart }: {
     </div>
   );
 }
+
+type PaletteDragItem = {
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  type: string;
+  data: Record<string, unknown>;
+};
+
+type TouchDragState = {
+  pointerId: number;
+  x: number;
+  y: number;
+  item: PaletteDragItem;
+};
 
 function SliderInput({ label, value, min, max, step, unit, sliderClass, onChange }: {
   label: string; value: number; min: number; max: number; step: number; unit: string; sliderClass: string;
@@ -242,6 +285,18 @@ function CircuitSandboxContent() {
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [powered, setPowered] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [touchDrag, setTouchDrag] = useState<TouchDragState | null>(null);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setIsTouchDevice(
+        typeof window !== 'undefined' &&
+          ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0)
+      );
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   // palette config state
   const [batV, setBatV] = useState(9);
@@ -257,6 +312,46 @@ function CircuitSandboxContent() {
     event.dataTransfer.setData('application/reactflow', JSON.stringify({ type, data }));
     event.dataTransfer.effectAllowed = 'move';
   };
+
+  const addNodeAtClientPoint = useCallback((item: PaletteDragItem, clientX: number, clientY: number) => {
+    const position = screenToFlowPosition({ x: clientX, y: clientY });
+    setNodes((nds) => nds.concat({ id: getId(), type: item.type, position, data: item.data }));
+    setPowered(false);
+  }, [screenToFlowPosition]);
+
+  const startTouchDrag = useCallback((event: React.PointerEvent, item: PaletteDragItem) => {
+    if (!isTouchDevice) return;
+    if (event.pointerType === 'mouse') return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setTouchDrag({ pointerId: event.pointerId, x: event.clientX, y: event.clientY, item });
+  }, [isTouchDevice]);
+
+  const moveTouchDrag = useCallback((event: React.PointerEvent) => {
+    if (!touchDrag) return;
+    if (event.pointerId !== touchDrag.pointerId) return;
+    event.preventDefault();
+    setTouchDrag((prev) => (prev ? { ...prev, x: event.clientX, y: event.clientY } : null));
+  }, [touchDrag]);
+
+  const endTouchDrag = useCallback((event: React.PointerEvent) => {
+    if (!touchDrag) return;
+    if (event.pointerId !== touchDrag.pointerId) return;
+    event.preventDefault();
+
+    if (wrapper.current) {
+      const rect = wrapper.current.getBoundingClientRect();
+      const isInsideCanvas =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+      if (isInsideCanvas) addNodeAtClientPoint(touchDrag.item, event.clientX, event.clientY);
+    }
+
+    setTouchDrag(null);
+  }, [addNodeAtClientPoint, touchDrag]);
 
   const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }, []);
 
@@ -304,10 +399,44 @@ function CircuitSandboxContent() {
     : evalResult.state === 'short' || evalResult.state === 'overcurrent' ? 'text-red-400'
     : 'text-yellow-400';
 
+  const batteryPaletteItem: PaletteDragItem = {
+    label: `${batV}V Battery`,
+    icon: <Battery className="w-5 h-5 text-blue-400"/>,
+    color: 'blue',
+    type: 'battery',
+    data: { voltage: batV, shortCircuit: false },
+  };
+
+  const resistorPaletteItem: PaletteDragItem = {
+    label: `${fmt(resOhm)} Resistor`,
+    icon: <Activity className="w-5 h-5 text-orange-400"/>,
+    color: 'orange',
+    type: 'resistor',
+    data: { resistance: resOhm },
+  };
+
+  const ledPaletteItem: PaletteDragItem = {
+    label: `LED (${ledVf}V / ${ledImax}mA)`,
+    icon: (
+      <div className="w-5 h-5 rounded-full bg-emerald-400/20 border border-emerald-400 flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-emerald-400"/>
+      </div>
+    ),
+    color: 'green',
+    type: 'led',
+    data: {
+      forwardVoltage: ledVf,
+      maxCurrent: ledImax,
+      lit: false,
+      burnt: false,
+      dim: false,
+    },
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 w-full max-w-7xl mx-auto h-[650px]">
+    <div className="flex flex-col md:flex-row gap-4 w-full max-w-7xl mx-auto h-auto md:h-[650px]">
       {/* ── palette sidebar ── */}
-      <aside className="w-full md:w-72 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col shrink-0 backdrop-blur-sm overflow-y-auto no-scrollbar">
+      <aside className="w-full md:w-72 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col shrink-0 backdrop-blur-sm md:overflow-y-auto no-scrollbar">
         <h3 className="text-white font-bold mb-1 flex items-center gap-2 text-base">
           <Zap className="w-5 h-5 text-blue-400"/> Component Palette
         </h3>
@@ -315,24 +444,47 @@ function CircuitSandboxContent() {
 
         <div className="space-y-3 flex-1">
           {/* Battery */}
-          <PaletteItem label={`${batV}V Battery`}
-            icon={<Battery className="w-5 h-5 text-blue-400"/>} color="blue"
-            onDragStart={e => onDragStart(e, 'battery', { voltage: batV, shortCircuit: false })}>
+          <PaletteItem
+            label={batteryPaletteItem.label}
+            icon={batteryPaletteItem.icon}
+            color={batteryPaletteItem.color}
+            draggable={!isTouchDevice}
+            onPointerDown={(e) => startTouchDrag(e, batteryPaletteItem)}
+            onPointerMove={moveTouchDrag}
+            onPointerUp={endTouchDrag}
+            onPointerCancel={endTouchDrag}
+            onDragStart={(e) => onDragStart(e, batteryPaletteItem.type, batteryPaletteItem.data)}
+          >
             <SliderInput label="Voltage" value={batV} min={1.5} max={24} step={0.5} unit="V" sliderClass="slider-blue" onChange={setBatV}/>
           </PaletteItem>
 
           {/* Resistor */}
-          <PaletteItem label={`${fmt(resOhm)} Resistor`}
-            icon={<Activity className="w-5 h-5 text-orange-400"/>} color="orange"
-            onDragStart={e => onDragStart(e, 'resistor', { resistance: resOhm })}>
+          <PaletteItem
+            label={resistorPaletteItem.label}
+            icon={resistorPaletteItem.icon}
+            color={resistorPaletteItem.color}
+            draggable={!isTouchDevice}
+            onPointerDown={(e) => startTouchDrag(e, resistorPaletteItem)}
+            onPointerMove={moveTouchDrag}
+            onPointerUp={endTouchDrag}
+            onPointerCancel={endTouchDrag}
+            onDragStart={(e) => onDragStart(e, resistorPaletteItem.type, resistorPaletteItem.data)}
+          >
             <SliderInput label="Resistance" value={resOhm} min={10} max={10000} step={10} unit="Ω" sliderClass="slider-orange" onChange={setResOhm}/>
           </PaletteItem>
 
           {/* LED */}
-          <PaletteItem label={`LED (${ledVf}V / ${ledImax}mA)`}
-            icon={<div className="w-5 h-5 rounded-full bg-emerald-400/20 border border-emerald-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-emerald-400"/></div>}
-            color="green"
-            onDragStart={e => onDragStart(e, 'led', { forwardVoltage: ledVf, maxCurrent: ledImax, lit: false, burnt: false, dim: false })}>
+          <PaletteItem
+            label={ledPaletteItem.label}
+            icon={ledPaletteItem.icon}
+            color={ledPaletteItem.color}
+            draggable={!isTouchDevice}
+            onPointerDown={(e) => startTouchDrag(e, ledPaletteItem)}
+            onPointerMove={moveTouchDrag}
+            onPointerUp={endTouchDrag}
+            onPointerCancel={endTouchDrag}
+            onDragStart={(e) => onDragStart(e, ledPaletteItem.type, ledPaletteItem.data)}
+          >
             <SliderInput label="Forward Voltage" value={ledVf} min={1.0} max={5.0} step={0.1} unit="V" sliderClass="slider-green" onChange={setLedVf}/>
             <SliderInput label="Max Current" value={ledImax} min={5} max={100} step={1} unit="mA" sliderClass="slider-green" onChange={setLedImax}/>
           </PaletteItem>
@@ -368,7 +520,7 @@ function CircuitSandboxContent() {
           </div>
         )}
 
-        <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl" ref={wrapper}>
+        <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl h-[420px] md:h-full touch-none" ref={wrapper}>
           <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onConnect={onConnect} onDrop={onDrop} onDragOver={onDragOver} nodeTypes={nodeTypes} fitView colorMode="dark">
             <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#334155"/>
@@ -376,6 +528,19 @@ function CircuitSandboxContent() {
           </ReactFlow>
         </div>
       </div>
+
+      {/* ── touch drag overlay ── */}
+      {touchDrag && (
+        <div
+          className="fixed z-[60] pointer-events-none"
+          style={{ left: touchDrag.x, top: touchDrag.y, transform: 'translate(-50%, -70%)' }}
+        >
+          <div className="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 shadow-2xl flex items-center gap-2">
+            <div className="opacity-90">{touchDrag.item.icon}</div>
+            <span className="text-xs font-semibold text-white whitespace-nowrap">{touchDrag.item.label}</span>
+          </div>
+        </div>
+      )}
 
       {/* ── modal ── */}
       <AnimatePresence>

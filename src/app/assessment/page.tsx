@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Clock, CheckCircle, XCircle, Trophy, RotateCcw, ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -48,18 +48,25 @@ export default function AssessmentPage() {
   const [timeLeft, setTimeLeft] = useState(20 * 60);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const handleSubmit = useCallback(() => {
+    setSubmitted(true);
+    if (audioRef.current) audioRef.current.play().catch(() => {});
+  }, []);
+
   useEffect(() => {
     audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
   }, []);
 
   useEffect(() => {
-    if (examStarted && !submitted && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (examStarted && !submitted && timeLeft === 0) {
-      handleSubmit();
-    }
-  }, [examStarted, submitted, timeLeft]);
+    if (!examStarted || submitted || timeLeft <= 0) return;
+
+    const timeout = setTimeout(() => {
+      setTimeLeft((p) => Math.max(0, p - 1));
+      if (timeLeft === 1) handleSubmit();
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [examStarted, submitted, timeLeft, handleSubmit]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, "0");
@@ -72,11 +79,6 @@ export default function AssessmentPage() {
     const updated = [...answers];
     updated[currentQ] = optIndex;
     setAnswers(updated);
-  };
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-    if (audioRef.current) audioRef.current.play().catch(() => {});
   };
 
   const score = answers.reduce(

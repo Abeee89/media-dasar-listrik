@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Download, Bookmark, FileText, ExternalLink, X, Battery, Zap, ZapOff, ShieldAlert, Cpu } from "lucide-react";
+import { BookOpen, Download, FileText, X, Battery, Zap, ZapOff, ShieldAlert, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -141,8 +141,6 @@ const colorMap: Record<string, { bg: string; button: string; iconColor: string }
   pink: { bg: "bg-pink-100 dark:bg-pink-900/30 border-b border-pink-200 dark:border-pink-800", button: "bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-500/20", iconColor: "text-pink-600 dark:text-pink-400" },
   green: { bg: "bg-emerald-100 dark:bg-emerald-900/30 border-b border-emerald-200 dark:border-emerald-800", button: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400" },
 };
-
-const springTransition = { type: "spring" as const, stiffness: 350, damping: 30 };
 
 export default function MaterialsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);

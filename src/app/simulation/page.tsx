@@ -51,7 +51,7 @@ export default function SimulationHub() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
             >
-              <Link href={`/modules/${mod.id}`} className="block group">
+              <Link href={`/modules/${mod.id}`} replace className="block group">
                 <div
                   className={`glass-card glass-card-hover p-6 h-full transition-all duration-300 hover:-translate-y-1 ${c.glow}`}
                 >
