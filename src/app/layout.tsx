@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 import { Navbar } from "@/components/layout/Navbar";
 import { Chatbot } from "@/components/layout/Chatbot";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Basic Electricity EdTech",
@@ -33,18 +34,20 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Navbar />
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
-          <Chatbot />
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            <main className="flex-1 flex flex-col">
+              {children}
+            </main>
+            <Chatbot />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

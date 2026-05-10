@@ -7,6 +7,7 @@ import { Zap, BookOpen, PenTool, LayoutDashboard, Target, Menu, X, Sun, Moon } f
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useTheme } from "next-themes";
+import { useSession, signOut } from "next-auth/react";
 
 const links = [
   { href: "/", label: "Home", icon: Zap },
@@ -20,6 +21,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { data: session, status } = useSession();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -84,8 +86,37 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Theme Toggle & Mobile Hamburger */}
+        {/* Theme Toggle, Auth & Mobile Hamburger */}
         <div className="flex items-center gap-2">
+          {status === "loading" ? null : session ? (
+            <div className="hidden md:flex items-center gap-3 mr-2">
+              <span className="text-sm font-medium text-slate-300">
+                {session.user?.name}
+              </span>
+              <button
+                onClick={() => signOut()}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <Link
+                href="/login"
+                className="text-sm font-medium px-4 py-2 text-slate-300 hover:text-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm font-semibold px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Register
+              </Link>
+            </div>
+          )}
+
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
